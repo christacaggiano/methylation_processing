@@ -7,7 +7,7 @@ def get_coords(line):
 if __name__ == "__main__": 
 
 	window_size = 10
-	file_name = "test/t_smaller.txt"
+	file_name = "test/test_set_sample.txt"
 	
 	with open(file_name) as f: 
 		
