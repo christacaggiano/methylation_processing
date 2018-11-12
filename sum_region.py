@@ -15,14 +15,16 @@ def sum_counts(region, output_file):
 	number_of_cpgs = len(region)
 	number_of_tissues = int((len(region[0]) - 3)/2) 
 
-	count_matrix = np.empty((number_of_cpgs, number_of_tissues))
+	meth_count_matrix = np.empty((number_of_cpgs, number_of_tissues))
+	unmeth_count_matrix = np.empty((number_of_cpgs, number_of_tissues))
 
-	# for cpg in region: 
 
-	# 	counts, percents = get_counts_percents(cpg)
-	# 	meth, unmeth = 
-	# 	cpg_counts.append(counts)
-	# 	cpg_percents.append(percent_meth)
+	for cpg in region: 
+
+		counts, percents = get_counts_percents(cpg)
+		meth, unmeth = get_methylation(counts, percents)
+		cpg_counts.append(counts)
+		cpg_percents.append(percent_meth)
 
 	
 	# write_summed_counts([sum(x) for x in zip(*counts)], chrom, beginning, end, output_file) 
