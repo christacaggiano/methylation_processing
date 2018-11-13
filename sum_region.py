@@ -1,55 +1,64 @@
 import csv
 import numpy as np
 
+
 def get_coords(line): 
 
 	return str(line[0]), int(line[1]), int(line[2])
 
 
-def sum_counts(region, output_file): 
-	
+def define_region(region): 
+
 	chrom = region[0][0]
 	beginning = region[0][1]
 	end = region[-1][2]
 
-	number_of_cpgs = len(region)
-	number_of_tissues = int((len(region[0]) - 3)/2) 
-
-	meth_count_matrix = np.empty((number_of_cpgs, number_of_tissues))
-	unmeth_count_matrix = np.empty((number_of_cpgs, number_of_tissues))
+	return chrom, beginning, end 
 
 
-	for cpg in region: 
+def collapse_region(region, output_file): 
 
-		counts, percents = get_counts_percents(cpg)
-		meth, unmeth = get_methylation(counts, percents)
-		cpg_counts.append(counts)
-		cpg_percents.append(percent_meth)
+	num_cpgs = len(region)
+	num_tissues = int((len(region[0]) - 3)/2) 
 
+	methylated = np.empty((num_cpgs, num_tissues))
+	unmethylated = np.empty((num_cpgs, num_tissues))
+
+	for row, cpg in enumerate(region): 
+		update_counts(cpg, methylated, unmethylated, row)
 	
-	# write_summed_counts([sum(x) for x in zip(*counts)], chrom, beginning, end, output_file) 
+	summed = get_summed_percents(methylated, unmethylated)
+	get_correlation(summed)
 
-
-def get_counts_percents(cpg): 
-
+def update_counts(cpg, methylated, unmethylated, index): 
+	
 	counts = np.array([int(cpg[count]) for count in range(3, len(cpg), 2)])
 	percents = np.array([float(cpg[count])/100 for count in range(4, len(cpg), 2)])
-
-	return counts, percents
-
-
-def get_methylation(counts, percents):
 
 	number_methylated = counts*percents
 	number_unmethylated = counts-number_methylated
 
-	# percent_methylated = 
-	
-	return percent_methylated
+	methylated[index] = number_methylated
+	unmethylated[index] = number_unmethylated
 
-# def sum_counts(cpg_counts, cpg_percents): 
 
-# 	summed_counts = [sum(x) for x in zip(*counts)]
+def get_summed_percents(methylated, unmethylated): 
+
+	total = methylated + unmethylated
+	total[total == 0] = np.nan
+
+	return methylated/total
+
+
+def get_correlation(summed_percents):
+	correlations = np.array((1, summed_percents.shape[1]))
+
+	for i in range(0, summed_percents.shape[1]):
+
+		corr = 
+		correlations[i] = np.corrcoef(summed_percents.T[i,:])
+
+	print(correlations)
 
 
 def write_summed_counts(summed_counts, chrom, beginning, end, output): 
@@ -80,11 +89,12 @@ if __name__ == "__main__":
 				region.append(line)
 				previous_chrom = chrom
 			else: 
-				sum_counts(region, summed_file)
+				collapse_region(region, summed_file)
 				region = [line] 
 				previous_chrom, beginning, _ = get_coords(line)
+				break
 
-		sum_counts(region, summed_file)
+		# collapse_region(region, summed_file)
 
 
 
