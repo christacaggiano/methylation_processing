@@ -1,5 +1,6 @@
 import csv
 import numpy as np
+import pandas as pd
 
 
 def get_coords(line): 
@@ -13,7 +14,7 @@ def define_region(region):
 	beginning = region[0][1]
 	end = region[-1][2]
 
-	return chrom, beginning, end 
+	return [chrom, beginning, end]
 
 
 def collapse_region(region, output_file): 
@@ -28,7 +29,10 @@ def collapse_region(region, output_file):
 		update_counts(cpg, methylated, unmethylated, row)
 	
 	summed = get_summed_percents(methylated, unmethylated)
-	get_correlation(summed)
+	mean, std = get_correlation(summed)
+
+	return define_region(region) + [mean] + [std]
+
 
 def update_counts(cpg, methylated, unmethylated, index): 
 	
@@ -51,25 +55,30 @@ def get_summed_percents(methylated, unmethylated):
 
 
 def get_correlation(summed_percents):
-	correlations = np.array((1, summed_percents.shape[1]))
-
-	for i in range(0, summed_percents.shape[1]):
-
-		corr = 
-		correlations[i] = np.corrcoef(summed_percents.T[i,:])
-
-	print(correlations)
-
-
-def write_summed_counts(summed_counts, chrom, beginning, end, output): 
 	
-	output.writerow([chrom] + [beginning] + [end] + summed_counts)
+	df = pd.DataFrame(summed_percents.T)
+	corr = df.corr(method='pearson')
+		
+	return average_pairwise_correlation(corr) 
+	
+
+def average_pairwise_correlation(corr):
+
+	lower = corr.mask(np.triu(np.ones(corr.shape)).astype(bool)).stack()
+
+	return lower.mean(), lower.std()
+	
+
+def write_summed_file(summed_sites, output): 
+	
+	for cpg in summed_sites:
+		output.writerow(cpg) 
 
 
 if __name__ == "__main__": 
 
-	window_size = 10
-	file_name = "data/test_set_sample.txt"
+	window_size = 1000
+	file_name = "../test/test_data.txt"
 	output_file = "data/test_summed.txt"
 	
 	with open(file_name, "r") as input_file, open(output_file, "w") as output_file: 
@@ -80,6 +89,7 @@ if __name__ == "__main__":
 		line = next(bed_file)
 		previous_chrom, beginning, end = get_coords(line)
 		region = [line]
+		summed_regions = []
 
 		for line in bed_file: 
 		
@@ -89,13 +99,11 @@ if __name__ == "__main__":
 				region.append(line)
 				previous_chrom = chrom
 			else: 
-				collapse_region(region, summed_file)
+				summed_regions.append(collapse_region(region, summed_file))
 				region = [line] 
 				previous_chrom, beginning, _ = get_coords(line)
-				break
-
-		# collapse_region(region, summed_file)
-
+				
+		write_summed_file(summed_regions, summed_file)
 
 
 
