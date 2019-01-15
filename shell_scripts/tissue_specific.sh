@@ -12,5 +12,4 @@
 conda activate py36	
 
 cd ../
-python sum_region.py 1000 ../test/output_sites.txt data/test_summed_1000_redone.txt data/test_summed_1000_redone_counts.txt
-python sum_region.py 1000 ../training/output_sites.txt data/training_summed_1000_redone.txt data/training_summed_1000_redone_counts.txt
+python select_tissue_specific_sites.py

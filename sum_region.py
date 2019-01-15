@@ -1,7 +1,10 @@
 import csv
 import numpy as np
 import pandas as pd
+import sys
 
+BATCH_SIZE = 10000
+FILTER_PARAMETER = 75
 
 def get_coords(line): 
 
@@ -17,7 +20,7 @@ def define_region(region):
 	return [chrom, beginning, end]
 
 
-def collapse_region(region, output_file): 
+def collapse_region(region): 
 
 	num_cpgs = len(region)
 	num_tissues = int((len(region[0]) - 3)/2) 
@@ -28,10 +31,10 @@ def collapse_region(region, output_file):
 	for row, cpg in enumerate(region): 
 		update_counts(cpg, methylated, unmethylated, row)
 	
-	summed = get_summed_percents(methylated, unmethylated)
-	mean, std = get_correlation(summed)
-
-	return define_region(region) + [mean] + [std]
+	# percents = get_percents(methylated, unmethylated)
+	# mean, std = get_correlation(percents)
+	percents, total_reads = get_summed_percents(methylated, unmethylated)
+	return define_region(region) + percents.tolist(), total_reads
 
 
 def update_counts(cpg, methylated, unmethylated, index): 
@@ -46,13 +49,22 @@ def update_counts(cpg, methylated, unmethylated, index):
 	unmethylated[index] = number_unmethylated
 
 
-def get_summed_percents(methylated, unmethylated): 
+def get_percents(methylated, unmethylated): 
 
 	total = methylated + unmethylated
 	total[total == 0] = np.nan
 
 	return methylated/total
 
+def get_summed_percents(methylated, unmethylated): 
+
+	methylated_summed = np.sum(methylated, axis=0)
+	unmethylated_summed = np.sum(unmethylated, axis=0)
+
+	total = methylated_summed + unmethylated_summed
+	total[total == 0] = np.nan
+
+	return methylated_summed / total, total 
 
 def get_correlation(summed_percents):
 	
@@ -71,25 +83,28 @@ def average_pairwise_correlation(corr):
 
 def write_summed_file(summed_sites, output): 
 	
-	for cpg in summed_sites:
-		output.writerow(cpg) 
+	output.writerows(summed_sites) 
 
 
 if __name__ == "__main__": 
 
-	window_size = 1000
-	file_name = "../test/test_data.txt"
-	output_file = "data/test_summed.txt"
+	sys.argv[1]
+	window_size = int(sys.argv[1])
+	file_name = sys.argv[2]
+	percents_output_file = sys.argv[3]
+	counts_output_file = sys.argv[4]
 	
-	with open(file_name, "r") as input_file, open(output_file, "w") as output_file: 
+	with open(file_name, "r") as input_file, open(counts_output_file, "w") as counts_output_file, open(percents_output_file, "w") as percents_output_file: 
 		
 		bed_file = csv.reader(input_file, delimiter='\t')
-		summed_file = csv.writer(output_file, delimiter='\t')
-		
+		summed_file_percents = csv.writer(percents_output_file, delimiter='\t')
+		summed_file_counts = csv.writer(counts_output_file, delimiter='\t')
+
 		line = next(bed_file)
 		previous_chrom, beginning, end = get_coords(line)
 		region = [line]
-		summed_regions = []
+		summed_regions_percents = []
+		summed_regions_counts = []
 
 		for line in bed_file: 
 		
@@ -99,11 +114,24 @@ if __name__ == "__main__":
 				region.append(line)
 				previous_chrom = chrom
 			else: 
-				summed_regions.append(collapse_region(region, summed_file))
+				summed, total_counts = collapse_region(region)
+				if np.sum(total_counts) > FILTER_PARAMETER: 
+					summed_regions_percents.append(summed)
+					summed_regions_counts.append(total_counts)
 				region = [line] 
 				previous_chrom, beginning, _ = get_coords(line)
+
+			if len(summed_regions_percents)>BATCH_SIZE:
+				write_summed_file(summed_regions_percents, summed_file_percents)
+				write_summed_file(summed_regions_counts, summed_file_counts)
+
+				summed_regions_counts.clear()
+				summed_regions_percents.clear()
+
 				
-		write_summed_file(summed_regions, summed_file)
+		write_summed_file(summed_regions_percents, summed_file_percents)
+		write_summed_file(summed_regions_counts, summed_file_counts)
+
 
 
 
