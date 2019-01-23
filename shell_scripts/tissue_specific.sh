@@ -12,4 +12,5 @@
 conda activate py36	
 
 cd ../
-python select_tissue_specific_sites.py
+#python select_tissue_specific_sites.py
+python select_tissue_specific_chip.py 

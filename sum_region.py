@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 import sys
 
-BATCH_SIZE = 10000
-FILTER_PARAMETER = 75
+BATCH_SIZE = 1000
+FILTER_PARAMETER = 200
 
 def get_coords(line): 
 
@@ -39,8 +39,8 @@ def collapse_region(region):
 
 def update_counts(cpg, methylated, unmethylated, index): 
 	
-	counts = np.array([int(cpg[count]) for count in range(3, len(cpg), 2)])
-	percents = np.array([float(cpg[count])/100 for count in range(4, len(cpg), 2)])
+	counts = np.array([float(cpg[count]) if not cpg[count] == "" else np.nan for count in range(3, len(cpg), 2)])
+	percents = np.array([float(cpg[count])/100  if not cpg[count] == "" else np.nan for count in range(4, len(cpg), 2)])
 
 	number_methylated = counts*percents
 	number_unmethylated = counts-number_methylated
@@ -88,7 +88,6 @@ def write_summed_file(summed_sites, output):
 
 if __name__ == "__main__": 
 
-	sys.argv[1]
 	window_size = int(sys.argv[1])
 	file_name = sys.argv[2]
 	percents_output_file = sys.argv[3]
@@ -111,13 +110,17 @@ if __name__ == "__main__":
 			chrom, _, end = get_coords(line)
 
 			if end - beginning <= window_size and chrom==previous_chrom: 
+			
 				region.append(line)
 				previous_chrom = chrom
 			else: 
 				summed, total_counts = collapse_region(region)
-				if np.sum(total_counts) > FILTER_PARAMETER: 
+
+				if np.nansum(total_counts) > FILTER_PARAMETER: 
+
 					summed_regions_percents.append(summed)
 					summed_regions_counts.append(total_counts)
+
 				region = [line] 
 				previous_chrom, beginning, _ = get_coords(line)
 

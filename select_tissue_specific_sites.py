@@ -38,21 +38,20 @@ def get_other_tissues(percents, tissue_index, leuk_index):
 
 def test_hypermethylated(percents, tissue_index, leuk_index): 
     other_tissues = get_other_tissues(percents, tissue_index, leuk_index)
-    hypermethylated = [x for x in other_tissues if x > 0.9] 
+    hypermethylated = [x for x in other_tissues if x > 0.8] 
 
-    return len(hypermethylated)/len(other_tissues) > 0.8 
+    return len(hypermethylated)/len(other_tissues) > 0.7 
 
 
 if __name__ == "__main__": 
 
-    methylation_file = "data/test_summed_1000_redone.txt" 
-    counts_file = "data/test_summed_1000_redone_counts.txt"
+    methylation_file = "data/small_ref_merged_1000_percents.txt" 
+    counts_file = "data/small_ref_merged_1000_counts.txt"
     
-    output_percents = "data/test_tss_percents.txt"
-    output_meth = "data/test_tss_meth.txt"
-    output_unmeth = "data/test_tss_unmeth.txt"
+    output_percents = "data/small_ref_tss_percents_lessstrict.txt"
+    output_meth = "data/small_ref_tss_meth_lessstrict.txt"
+    output_unmeth = "data/small_ref_tss_unmeth_lessstrict.txt"
 
- 
     with open(methylation_file, "r") as f1, open(counts_file, "r") as f2, open(output_percents, "w") as f3, open(output_meth, "w") as f4, open(output_unmeth, "w") as f5:
         percents_reader = csv.reader(f1, delimiter="\t")
         counts_reader = csv.reader(f2, delimiter="\t")
@@ -68,7 +67,7 @@ if __name__ == "__main__":
 
             for i, val in enumerate(percents):
                 if counts[i] > 0: 
-                    site = check_site(percents, i, 14)
+                    site = check_site(percents, i, -6)
 
                     if site:
                         sites.append((site, i)) 
