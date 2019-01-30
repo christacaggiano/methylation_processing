@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 import sys
 
-BATCH_SIZE = 10000
-FILTER_PARAMETER = 75
+BATCH_SIZE = 100
+FILTER_PARAMETER = 0
 
 def get_coords(line): 
 
@@ -23,7 +23,18 @@ def define_region(region):
 def collapse_region(region): 
 	
 	values = [x[3:] for x in region]
-	values_array = np.array(values, dtype=float)
+	
+	values_corrected = []
+	for l in values: 
+		new_list = []
+		for item in l: 
+			if item=="NA": 
+				new_list.append(0)
+			else: 
+				new_list.append(item)
+		values_corrected.append(new_list)
+
+	values_array = np.array(values_corrected, dtype=float)
 	
 	summed = values_array.sum(axis=0)
 	
@@ -55,6 +66,8 @@ if __name__ == "__main__":
 	window_size = int(sys.argv[1])
 	file_name = sys.argv[2]
 	counts_output_file = sys.argv[3]
+
+	print(window_size)
 	
 	with open(file_name, "r") as input_file, open(counts_output_file, "w") as counts_output_file: 
 		
@@ -68,8 +81,10 @@ if __name__ == "__main__":
 		summed_regions_counts = []
 
 		for line in bed_file: 
+			# print(line)
 		
 			chrom, _, end = get_coords(line)
+			
 
 			if end - beginning <= window_size and chrom==previous_chrom: 
 				region.append(line)
@@ -78,9 +93,8 @@ if __name__ == "__main__":
 				
 				new_region = collapse_region(region)
 
-				if np.sum(new_region) > FILTER_PARAMETER: 
-					summed_line = [chrom, beginning, end-1] + new_region
-					summed_regions_counts.append(summed_line)
+				summed_line = [chrom, beginning, end] + new_region
+				summed_regions_counts.append(summed_line)
 				
 				region = [line] 
 				previous_chrom, beginning, _ = get_coords(line)

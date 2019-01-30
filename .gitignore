@@ -1,1 +1,4 @@
 shell_scripts/*.sh.o*
+data/*.txt
+data/*.csv
+
