@@ -3,7 +3,7 @@ import numpy as np
 
 def get_counts(percents): 
     
-    percents = np.array([float(x) if not x == "" else np.nan for x in percents[3:]])
+    percents = np.array([float(x) if not x == "NA" else np.nan for x in percents[3:]])
 
     return percents.tolist()
 
@@ -31,9 +31,9 @@ def test_hypermethylated(percents, tissue_index, leuk_index):
 
 if __name__ == "__main__": 
 
-    methylation_file = "../../chip-reference-matrix/large_hg38.txt" 
+    methylation_file = "../../chip-reference-matrix/large_hg38_na.txt" 
     
-    output_percents = "data/large_chip_tss_percents.txt" 
+    output_percents = "data/large_hg38_na_tss.txt" 
     
     with open(methylation_file, "r") as f1, open(output_percents, "w") as f3:
         percents_reader = csv.reader(f1, delimiter="\t")
